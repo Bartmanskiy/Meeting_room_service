@@ -1,15 +1,28 @@
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.api.routes.rooms import router as rooms_router
 from app.api.routes.bookings import router as bookings_router
-from app.db.database import get_db
+from app.api.routes.rooms import router as rooms_router
+from app.db.database import get_db, init_db, seed_rooms
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    seed_rooms()
+
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+
 
 app.include_router(rooms_router)
 app.include_router(bookings_router)
+
 
 @app.get("/")
 def root():
@@ -19,4 +32,5 @@ def root():
 @app.get("/db-test")
 def db_test(db: Session = Depends(get_db)):
     result = db.execute(text("SELECT 1"))
+
     return {"database": result.scalar()}
