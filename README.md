@@ -390,16 +390,3 @@ bookings
 
 додані до `.gitignore`.
 
-## Призначення проєкту
-
-Проєкт створений у навчальних цілях для практики:
-
-* Python backend;
-* FastAPI;
-* REST API;
-* PostgreSQL;
-* SQLAlchemy;
-* Repository/Service architecture;
-* Dependency Injection через `Depends()`;
-* тестування API;
-* Docker та Docker Compose.
