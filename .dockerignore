@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.env
+.env.docker
+.idea
+.vscode
+tests
+README.md
+.gitignore
