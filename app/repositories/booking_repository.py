@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -27,8 +27,7 @@ class BookingRepository:
 
     def create(self, booking: Booking) -> Booking:
         self.db.add(booking)
-        self.db.commit()
-        self.db.refresh(booking)
+        self.db.flush()
 
         return booking
 
@@ -41,24 +40,19 @@ class BookingRepository:
         statement = select(Booking)
 
         if room_id is not None:
-            statement = statement.where(
-                Booking.room_id == room_id
-            )
+            statement = statement.where(Booking.room_id == room_id)
 
         if booking_date is not None:
-            start_of_day = datetime.combine(
+            day_start = datetime.combine(
                 booking_date,
                 datetime.min.time(),
             )
 
-            end_of_day = datetime.combine(
-                booking_date,
-                datetime.max.time(),
-            )
+            next_day_start = day_start + timedelta(days=1)
 
             statement = statement.where(
-                Booking.start_time >= start_of_day,
-                Booking.start_time <= end_of_day,
+                Booking.end_time > day_start,
+                Booking.start_time < next_day_start,
             )
 
         statement = statement.order_by(Booking.start_time)
@@ -66,9 +60,7 @@ class BookingRepository:
         return list(self.db.scalars(statement).all())
 
     def get_by_id(self, booking_id: int) -> Booking | None:
-        statement = select(Booking).where(
-            Booking.id == booking_id
-        )
+        statement = select(Booking).where(Booking.id == booking_id)
 
         return self.db.scalar(statement)
 

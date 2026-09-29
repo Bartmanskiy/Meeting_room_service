@@ -20,43 +20,42 @@ class BookingService:
         booking_data: BookingCreate,
     ) -> Booking:
 
-        room = self.room_repository.get_by_id(
-            booking_data.room_id
-        )
+        with self.booking_repository.db.begin():
+            room = self.room_repository.get_by_id(booking_data.room_id)
 
-        if room is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Room not found",
-            )
+            if room is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Room not found",
+                )
 
-        overlapping_booking = (
-            self.booking_repository.get_overlapping_booking(
+            overlapping_booking = self.booking_repository.get_overlapping_booking(
                 room_id=booking_data.room_id,
                 start_time=booking_data.start_time,
                 end_time=booking_data.end_time,
             )
-        )
 
-        if overlapping_booking is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Room is already booked for this time",
+            if overlapping_booking is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Room is already booked for this time",
+                )
+
+            booking = Booking(
+                room_id=booking_data.room_id,
+                organizer_name=booking_data.organizer_name,
+                start_time=booking_data.start_time,
+                end_time=booking_data.end_time,
             )
 
-        booking = Booking(
-            room_id=booking_data.room_id,
-            organizer_name=booking_data.organizer_name,
-            start_time=booking_data.start_time,
-            end_time=booking_data.end_time,
-        )
+            self.booking_repository.create(booking)
 
-        return self.booking_repository.create(booking)
+        self.booking_repository.db.refresh(booking)
+
+        return booking
 
     def delete_booking(self, booking_id: int) -> None:
-        booking = self.booking_repository.get_by_id(
-            booking_id
-        )
+        booking = self.booking_repository.get_by_id(booking_id)
 
         if booking is None:
             raise HTTPException(

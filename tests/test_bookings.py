@@ -236,3 +236,25 @@ def test_get_rooms(client):
     assert len(data) == 1
     assert data[0]["name"] == "Test Room"
     assert data[0]["capacity"] == 6
+
+
+def test_get_bookings_by_date_with_overnight_booking(client):
+    response = client.post(
+        "/api/bookings",
+        json={
+            "room_id": 1,
+            "organizer_name": "Test User",
+            "start_time": "2026-10-01T23:00:00",
+            "end_time": "2026-10-02T01:00:00",
+        },
+    )
+
+    assert response.status_code == 201
+
+    response = client.get(
+        "/api/bookings?date=2026-10-02"
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["organizer_name"] == "Test User"
